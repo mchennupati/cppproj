@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ask Llama Locally !</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        form, #conversation {
+            margin-bottom: 20px;
+            width: calc(100% - 40px); /* Adjusting for the 20px margin on each side */
+        }
+        input[type="text"], button {
+            width: calc(100% - 22px); /* Adjusting for padding and border */
+            box-sizing: border-box; /* To include padding and border in the width */
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        input[type="text"] {
+            font-size: 16px;
+            border: 2px solid gray;
+            background-color: transparent;
+            outline: none;
+            color: gray;
+        }
+        button {
+            font-size: 16px;
+            border: 2px solid gray;
+            background-color: gray;
+            color: white;
+            cursor: pointer;
+        }
+        #conversation {
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <form id="messageForm">
+        <input type="text" name="message" placeholder="Enter text here">
+        <button type="submit">Send</button>
+    </form>
+
+    <div id="conversation"></div>
+
+    <script>
+        document.getElementById('messageForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const message = document.getElementsByName('message')[0].value;
+            const conversation = document.getElementById('conversation');
+
+            conversation.innerHTML += `<div>Question: ${message}</div>`;
+
+            fetch('/sendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `message=${encodeURIComponent(message)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                conversation.innerHTML += `<div>Answer: ${data}</div>`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+
+</html>
+
+
+
+
