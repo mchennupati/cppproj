@@ -54,35 +54,45 @@ int main() {
     //         std::cout << "Received message: " << message << std::endl;
     //     }
     // }
-        if (requestStr.find("POST") != std::string::npos) {
+    if (requestStr.find("POST") != std::string::npos) {
         size_t messageStart = requestStr.find("message=");
         if (messageStart != std::string::npos) {
             std::string message = requestStr.substr(messageStart + 8);
             std::string command = "../llama.cpp/main -m ../llama.cpp/models/llama-2-7b-chat/ggml-model-q4_0.gguf -n 1024 --prompt \"" + message + "\"";
 
-            // Execute the command
+            // Execute the command and capture output
             std::cout << "Executing command: " << command << std::endl;
-            int result = system(command.c_str());
-            if (result != 0) {
-                std::cerr << "Error executing command" << std::endl;
+            std::string output;
+            char buffer[128];
+            FILE* pipe = popen(command.c_str(), "r");
+            if (!pipe) {
+                std::cerr << "Failed to run command" << std::endl;
+            } else {
+                while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+                    output += buffer;
+                }
+                pclose(pipe);
             }
-        }
-    }
 
-    // Response - serve the HTML form for both GET and POST
-    std::string response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n"
+            // Send output as response
+            std::string response = "HTTP/1.1 200 OK\nContent-Type: text/plain\n\n" + output;
+            write(new_socket, response.c_str(), response.length());
+        }
+    } else {
+        // Handle GET request or other non-POST requests
+        // Send the HTML form as response
+        std::string form = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n"
                            "<html><body>"
                            "<form action=\"/\" method=\"post\">"
                            "Enter message: <input type=\"text\" name=\"message\">"
                            "<input type=\"submit\" value=\"Submit\">"
                            "</form>"
                            "</body></html>";
+        write(new_socket, form.c_str(), form.length());
+    }
 
-    write(new_socket, response.c_str(), response.length());
-    std::cout << "------------------Response sent-------------------" << std::endl;
     close(new_socket);
 }
-
 
     return 0;
 }
